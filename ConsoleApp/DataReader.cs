@@ -6,6 +6,7 @@
     using System.IO;
     using System.Linq;
     using System.Threading.Tasks;
+    using System.Collections.Specialized;
 
     public class DataReader
     {
@@ -13,7 +14,7 @@
 
         public void ImportAndPrintData(string fileToImport, bool printData = true)
         {
-            ImportedObjects = new List<ImportedObject>() { new ImportedObject() };
+            ImportedObjects = new List<ImportedObject>();
 
             var streamReader = new StreamReader(fileToImport);
 
@@ -24,19 +25,25 @@
                 importedLines.Add(line);
             }
 
-            for (int i = 0; i <= importedLines.Count; i++)
+            for (int i = 0; i < importedLines.Count; i++)
             {
                 var importedLine = importedLines[i];
-                var values = importedLine.Split(';');
-                var importedObject = new ImportedObject();
-                importedObject.Type = values[0];
-                importedObject.Name = values[1];
-                importedObject.Schema = values[2];
-                importedObject.ParentName = values[3];
-                importedObject.ParentType = values[4];
-                importedObject.DataType = values[5];
-                importedObject.IsNullable = values[6];
-                ((List<ImportedObject>)ImportedObjects).Add(importedObject);
+
+                if (!string.IsNullOrWhiteSpace(importedLine))
+                {
+                    var values = importedLine.Split(';');
+                    var importedObject = new ImportedObject
+                    {
+                        Type = values[0],
+                        Name = values[1],
+                        Schema = values[2],
+                        ParentName = values[3],
+                        ParentType = values[4],
+                        DataType = values[5],
+                        IsNullable = values.Length > 6 ? values[6] : ""
+                    };
+                    ((List<ImportedObject>)ImportedObjects).Add(importedObject);
+                }
             }
 
             // clear and correct imported data
@@ -46,7 +53,7 @@
                 importedObject.Name = importedObject.Name.Trim().Replace(" ", "").Replace(Environment.NewLine, "");
                 importedObject.Schema = importedObject.Schema.Trim().Replace(" ", "").Replace(Environment.NewLine, "");
                 importedObject.ParentName = importedObject.ParentName.Trim().Replace(" ", "").Replace(Environment.NewLine, "");
-                importedObject.ParentType = importedObject.ParentType.Trim().Replace(" ", "").Replace(Environment.NewLine, "");
+                importedObject.ParentType = importedObject.ParentType.Trim().Replace(" ", "").Replace(Environment.NewLine, "").ToUpper();
             }
 
             // assign number of children
@@ -103,11 +110,6 @@
 
     class ImportedObject : ImportedObjectBaseClass
     {
-        public string Name
-        {
-            get;
-            set;
-        }
         public string Schema;
 
         public string ParentName;
